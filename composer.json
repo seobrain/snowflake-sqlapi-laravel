@@ -1,0 +1,17 @@
+{
+    "name": "seobrain/snowflake-sqlapi-laravel",
+    "description": "Snowflake SQL API adapter for Laravel",
+    "autoload": {
+        "psr-4": {
+            "Seobrain\\SnowflakeSqlapiLaravel\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Dmitry Gubanov"
+        }
+    ],
+    "require": {
+        "guzzlehttp/guzzle": "^7"
+    }
+}
