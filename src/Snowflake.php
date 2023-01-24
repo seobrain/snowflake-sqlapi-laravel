@@ -3,10 +3,14 @@
 namespace Seobrain\SnowflakeSqlapiLaravel;
 
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class Snowflake {
+
+    public array $response = [];
+
     /**
      * @throws RequestException
      */
@@ -31,36 +35,58 @@ class Snowflake {
     }
 
     /**
+     * @param $statement
+     * @param bool $async
+     * @return false|static
      * @throws RequestException
      */
-    public function postStatement($statement, $params = [])
+    public function postStatement($statement, bool $async = false): false|static
     {
         if (!$statement) return false;
 
         $sf_account = config('snowflakeapi.account');
-        $sf_server = "$sf_account.snowflakecomputing.com";
         $sf_warehouse = config('snowflakeapi.warehouse');
         $sf_role = config('snowflakeapi.role');
         $sf_timeout = 1000;
 
         $token = $this->getsAccessToken();
         $headers = ['X-Snowflake-Authorization-Token-Type' => 'OAUTH'];
-        $url = "https://$sf_server/api/v2/statements";
-        $params = http_build_query($params);
+        $url = "https://$sf_account.snowflakecomputing.com/api/v2/statements";
+        $url .= $async ? '?async=true' : '';
 
         $body = [
             'statement' => $statement,
             'timeout' => $sf_timeout,
             'warehouse' => $sf_warehouse,
-            'role' => $sf_role
+            'role' => $sf_role,
+            "parameters" => [
+                "DATE_OUTPUT_FORMAT" => "YYYY-MM-DD"
+            ]
         ];
 
-        $response = Http::acceptJson()
+        $this->response = Http::acceptJson()
             ->withToken($token)
             ->withHeaders($headers)
-            ->post("$url?$params", $body)
+            ->post("$url", $body)
             ->json();
 
-        return $response;
+        return $this;
+    }
+
+    public function toArray(): array
+    {
+        if (!$this->response['resultSetMetaData']) return [];
+        $headers = array_map(fn($h) => $h['name'], $this->response['resultSetMetaData']['rowType']);
+        $data = [];
+        foreach ($this->response['data'] as $row) {
+            $data[] = array_combine($headers, $row);
+        }
+
+        return $data;
+    }
+
+    public function toCollection(): Collection
+    {
+        return collect($this->toArray());
     }
 }
