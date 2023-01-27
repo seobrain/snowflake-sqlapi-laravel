@@ -31,4 +31,6 @@ return [
     'account' => env('SF_ACCOUNT'),
     'warehouse' => env('SF_WAREHOUSE'),
     'role' => env('SF_ROLE'),
+
+    'dateformat' => env('SF_DATE_OUTPUT_FORMAT', "YYYY-MM-DD")
 ];

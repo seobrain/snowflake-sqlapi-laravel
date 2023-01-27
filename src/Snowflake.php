@@ -37,7 +37,7 @@ class Snowflake {
     /**
      * @param $statement
      * @param bool $async
-     * @return false|static
+     * @return false|Snowflake
      * @throws RequestException
      */
     public function postStatement($statement, bool $async = false): false|static
@@ -60,19 +60,46 @@ class Snowflake {
             'warehouse' => $sf_warehouse,
             'role' => $sf_role,
             "parameters" => [
-                "DATE_OUTPUT_FORMAT" => "YYYY-MM-DD"
+                "DATE_OUTPUT_FORMAT" => config('snowflakeapi.dateformat')
             ]
         ];
 
         $this->response = Http::acceptJson()
             ->withToken($token)
             ->withHeaders($headers)
-            ->post("$url", $body)
+            ->post($url, $body)
             ->json();
 
         return $this;
     }
 
+    /**
+     * @param string $statement
+     * @return false|Snowflake
+     * @throws RequestException
+     */
+    public function getStatement(string $statement): false|static
+    {
+        if (!$statement) return false;
+
+        $sf_account = config('snowflakeapi.account');
+
+        $token = $this->getsAccessToken();
+        $headers = ['X-Snowflake-Authorization-Token-Type' => 'OAUTH'];
+        $url = "https://$sf_account.snowflakecomputing.com/api/v2/statements/$statement";
+
+        $this->response = Http::acceptJson()
+            ->withToken($token)
+            ->withHeaders($headers)
+            ->get($url)
+            ->json();
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
     public function toArray(): array
     {
         if (!$this->response['resultSetMetaData']) return [];
@@ -85,6 +112,9 @@ class Snowflake {
         return $data;
     }
 
+    /**
+     * @return Collection
+     */
     public function toCollection(): Collection
     {
         return collect($this->toArray());
