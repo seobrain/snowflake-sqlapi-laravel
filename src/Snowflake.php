@@ -36,11 +36,12 @@ class Snowflake {
 
     /**
      * @param $statement
+     * @param int $timeout
      * @param bool $async
      * @return false|Snowflake
      * @throws RequestException
      */
-    public function postStatement($statement, bool $async = false): false|static
+    public function postStatement($statement, int $timeout = 60, bool $async = false): false|static
     {
         if (!$statement) return false;
 
@@ -65,6 +66,7 @@ class Snowflake {
         ];
 
         $this->response = Http::acceptJson()
+            ->timeout($timeout)
             ->withToken($token)
             ->withHeaders($headers)
             ->post($url, $body)
