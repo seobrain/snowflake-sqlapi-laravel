@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Http;
 class Snowflake {
 
     public array $response = [];
+    public int $status;
 
     /**
      * @throws RequestException
@@ -65,12 +66,14 @@ class Snowflake {
             ]
         ];
 
-        $this->response = Http::acceptJson()
+        $request = Http::acceptJson()
             ->timeout($timeout)
             ->withToken($token)
             ->withHeaders($headers)
-            ->post($url, $body)
-            ->json();
+            ->post($url, $body);
+
+        $this->response = $request->json();
+        $this->status = $request->status();
 
         return $this;
     }
@@ -90,11 +93,34 @@ class Snowflake {
         $headers = ['X-Snowflake-Authorization-Token-Type' => 'OAUTH'];
         $url = "https://$sf_account.snowflakecomputing.com/api/v2/statements/$statement";
 
-        $this->response = Http::acceptJson()
+        $request = Http::acceptJson()
             ->withToken($token)
             ->withHeaders($headers)
-            ->get($url)
-            ->json();
+            ->get($url);
+
+        $this->response = $request->json();
+        $this->status = $request->status();
+
+        return $this;
+    }
+
+    public function cancelStatement(string $statement): false|static
+    {
+        if (!$statement) return false;
+
+        $sf_account = config('snowflakeapi.account');
+
+        $token = $this->getsAccessToken();
+        $headers = ['X-Snowflake-Authorization-Token-Type' => 'OAUTH'];
+        $url = "https://$sf_account.snowflakecomputing.com/api/v2/statements/$statement/cancel";
+
+        $request = Http::acceptJson()
+            ->withToken($token)
+            ->withHeaders($headers)
+            ->post($url);
+
+        $this->response = $request->json();
+        $this->status = $request->status();
 
         return $this;
     }
