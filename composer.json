@@ -1,6 +1,7 @@
 {
     "name": "seobrain/snowflake-sqlapi-laravel",
     "description": "Snowflake SQL API adapter for Laravel",
+    "version": "1.0.1",
     "autoload": {
         "psr-4": {
             "Seobrain\\SnowflakeSqlapiLaravel\\": "src/"
