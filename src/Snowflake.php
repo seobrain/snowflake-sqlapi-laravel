@@ -131,9 +131,16 @@ class Snowflake {
     public function toArray(): array
     {
         if (!$this->response['resultSetMetaData']) return [];
-        $headers = array_map(fn($h) => $h['name'], $this->response['resultSetMetaData']['rowType']);
+        $rowTypes = $this->response['resultSetMetaData']['rowType'];
+        $headers = array_map(fn($h) => $h['name'], $rowTypes);
+        // $types = array_map(fn($h) => $h['type'], $this->response['resultSetMetaData']['rowType']);
         $data = [];
         foreach ($this->response['data'] as $row) {
+            $row = array_map(fn($cell, $rowType) => match($rowType['type']) {
+                'fixed' => $rowType['scale'] > 0 ? (float) $cell : (int) $cell,
+                'boolean' => (bool) $cell,
+                default => $cell
+            }, $row, $rowTypes);
             $data[] = array_combine($headers, $row);
         }
 
